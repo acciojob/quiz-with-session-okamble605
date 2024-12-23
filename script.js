@@ -3,6 +3,35 @@ const questionsElement = document.getElementById("questions");
 const submitButton = document.getElementById("submit");
 const scoreElement = document.getElementById("score");
 
+// Questions data
+const questions = [
+  {
+    question: "What is the capital of France?",
+    choices: ["Paris", "London", "Berlin", "Madrid"],
+    answer: "Paris",
+  },
+  {
+    question: "What is the highest mountain in the world?",
+    choices: ["Everest", "Kilimanjaro", "Denali", "Matterhorn"],
+    answer: "Everest",
+  },
+  {
+    question: "What is the largest country by area?",
+    choices: ["Russia", "China", "Canada", "United States"],
+    answer: "Russia",
+  },
+  {
+    question: "Which is the largest planet in our solar system?",
+    choices: ["Earth", "Jupiter", "Mars"],
+    answer: "Jupiter",
+  },
+  {
+    question: "What is the capital of Canada?",
+    choices: ["Toronto", "Montreal", "Vancouver", "Ottawa"],
+    answer: "Ottawa",
+  },
+];
+
 // Retrieve progress from session storage
 let userAnswers = JSON.parse(sessionStorage.getItem("progress")) || {};
 
@@ -10,59 +39,57 @@ let userAnswers = JSON.parse(sessionStorage.getItem("progress")) || {};
 function renderQuestions() {
   questionsElement.innerHTML = ""; // Clear existing content
 
-  for (let i = 0; i < questions.length; i++) {
-    const question = questions[i];
-    const questionElement = document.createElement("div");
-    questionElement.classList.add("question");
+  questions.forEach((question, questionIndex) => {
+    const questionDiv = document.createElement("div");
+    questionDiv.classList.add("question");
 
     // Add question text
     const questionText = document.createElement("p");
     questionText.textContent = question.question;
-    questionElement.appendChild(questionText);
+    questionDiv.appendChild(questionText);
 
     // Add choices
-    for (let j = 0; j < question.choices.length; j++) {
-      const choice = question.choices[j];
-
+    question.choices.forEach((choice, choiceIndex) => {
       const choiceContainer = document.createElement("div");
-      const choiceElement = document.createElement("input");
-      choiceElement.setAttribute("type", "radio");
-      choiceElement.setAttribute("name", `question-${i}`);
-      choiceElement.setAttribute("value", choice);
-      choiceElement.id = `question-${i}-choice-${j}`;
 
-      // Check if this option was previously selected
-      if (userAnswers[i] === choice) {
-        choiceElement.checked = true;
+      const choiceInput = document.createElement("input");
+      choiceInput.type = "radio";
+      choiceInput.name = `question-${questionIndex}`;
+      choiceInput.value = choice;
+      choiceInput.id = `question-${questionIndex}-choice-${choiceIndex}`;
+
+      // Preserve user's previous selection
+      if (userAnswers[questionIndex] === choice) {
+        choiceInput.checked = true;
       }
 
       const choiceLabel = document.createElement("label");
-      choiceLabel.setAttribute("for", `question-${i}-choice-${j}`);
+      choiceLabel.setAttribute("for", choiceInput.id);
       choiceLabel.textContent = choice;
 
-      choiceContainer.appendChild(choiceElement);
+      choiceContainer.appendChild(choiceInput);
       choiceContainer.appendChild(choiceLabel);
-      questionElement.appendChild(choiceContainer);
+      questionDiv.appendChild(choiceContainer);
 
-      // Save selected answer in session storage
-      choiceElement.addEventListener("change", () => {
-        userAnswers[i] = choice;
+      // Save user's choice in session storage
+      choiceInput.addEventListener("change", () => {
+        userAnswers[questionIndex] = choice;
         sessionStorage.setItem("progress", JSON.stringify(userAnswers));
       });
-    }
+    });
 
-    questionsElement.appendChild(questionElement);
-  }
+    questionsElement.appendChild(questionDiv);
+  });
 }
 
 // Calculate and display the score
 function calculateScore() {
   let score = 0;
-  for (let i = 0; i < questions.length; i++) {
-    if (userAnswers[i] === questions[i].answer) {
+  questions.forEach((question, index) => {
+    if (userAnswers[index] === question.answer) {
       score++;
     }
-  }
+  });
   return score;
 }
 
