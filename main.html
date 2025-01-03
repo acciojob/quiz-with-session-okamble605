@@ -1,14 +1,100 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <h1>Quiz</h1>
-    <div id="questions"></div>
-    <button id="submit">Submit</button>
-    <div id="score"></div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz with Session</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .quiz-container {
+            width: 600px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .question {
+            margin-bottom: 15px;
+        }
+        .submit-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .submit-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>Quiz</h1>
+        <form id="quizForm">
+            <div class="question" data-index="0">
+                <p>1. What is the capital of France?</p>
+                <label><input type="radio" name="q0" value="Paris"> Paris</label><br>
+                <label><input type="radio" name="q0" value="London"> London</label><br>
+                <label><input type="radio" name="q0" value="Berlin"> Berlin</label>
+            </div>
+            <div class="question" data-index="1">
+                <p>2. Which planet is known as the Red Planet?</p>
+                <label><input type="radio" name="q1" value="Mars"> Mars</label><br>
+                <label><input type="radio" name="q1" value="Jupiter"> Jupiter</label><br>
+                <label><input type="radio" name="q1" value="Saturn"> Saturn</label>
+            </div>
+            <button type="button" class="submit-btn" onclick="submitQuiz()">Submit</button>
+        </form>
+        <p id="result"></p>
+    </div>
 
-    <script type="text/javascript" src="./script.js"></script>
-  </body>
+    <script>
+        const answers = ['Paris', 'Mars'];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+        });
+
+        function loadProgress() {
+            const progress = JSON.parse(sessionStorage.getItem('progress')) || {};
+            for (let i = 0; i < answers.length; i++) {
+                const selectedOption = progress[`q${i}`];
+                if (selectedOption) {
+                    const option = document.querySelector(`input[name="q${i}"][value="${selectedOption}"]`);
+                    if (option) option.checked = true;
+                }
+            }
+        }
+
+        document.querySelectorAll('input[type="radio"]').forEach(input => {
+            input.addEventListener('change', function() {
+                const progress = JSON.parse(sessionStorage.getItem('progress')) || {};
+                progress[this.name] = this.value;
+                sessionStorage.setItem('progress', JSON.stringify(progress));
+            });
+        });
+
+        function submitQuiz() {
+            let score = 0;
+            for (let i = 0; i < answers.length; i++) {
+                const selectedOption = document.querySelector(`input[name="q${i}"]:checked`);
+                if (selectedOption && selectedOption.value === answers[i]) {
+                    score++;
+                }
+            }
+            document.getElementById('result').textContent = `Your score is ${score} out of ${answers.length}`;
+            localStorage.setItem('score', score);
+            sessionStorage.removeItem('progress');
+        }
+    </script>
+</body>
 </html>
