@@ -3,98 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz with Session</title>
+    <title>Quiz App</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            flex-direction: column;
+            margin: 40px;
+            background-color: #f4f4f4;
         }
-        .quiz-container {
-            width: 600px;
-            border: 1px solid #ddd;
+        .container {
+            background: white;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            max-width: 500px;
+            margin: auto;
+        }
+        h1 {
+            text-align: center;
         }
         .question {
             margin-bottom: 15px;
         }
-        .submit-btn {
+        .options label {
+            display: block;
+            margin: 5px 0;
+        }
+        #submit {
             margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #4caf50;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #28a745;
             color: white;
             border: none;
             cursor: pointer;
+            width: 100%;
+            border-radius: 5px;
         }
-        .submit-btn:hover {
-            background-color: #45a049;
+        #submit:hover {
+            background-color: #218838;
+        }
+        #score {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
-    <div class="quiz-container">
+
+    <div class="container">
         <h1>Quiz</h1>
-        <form id="quizForm">
-            <div class="question" data-index="0">
-                <p>1. What is the capital of France?</p>
-                <label><input type="radio" name="q0" value="Paris"> Paris</label><br>
-                <label><input type="radio" name="q0" value="London"> London</label><br>
-                <label><input type="radio" name="q0" value="Berlin"> Berlin</label>
-            </div>
-            <div class="question" data-index="1">
-                <p>2. Which planet is known as the Red Planet?</p>
-                <label><input type="radio" name="q1" value="Mars"> Mars</label><br>
-                <label><input type="radio" name="q1" value="Jupiter"> Jupiter</label><br>
-                <label><input type="radio" name="q1" value="Saturn"> Saturn</label>
-            </div>
-            <button type="button" class="submit-btn" onclick="submitQuiz()">Submit</button>
-        </form>
-        <p id="result"></p>
+        <div id="quiz-container"></div>
+        <button id="submit">Submit</button>
+        <div id="score"></div>
     </div>
 
     <script>
-        const answers = ['Paris', 'Mars'];
+        // Questions array
+        const questions = [
+            { question: "What is the capital of France?", options: ["Paris", "London", "Berlin", "Madrid"], answer: "Paris" },
+            { question: "What is 2 + 2?", options: ["3", "4", "5", "6"], answer: "4" },
+            { question: "Which is the largest planet?", options: ["Earth", "Mars", "Jupiter", "Saturn"], answer: "Jupiter" },
+            { question: "Who wrote 'Hamlet'?", options: ["Shakespeare", "Dickens", "Austen", "Hemingway"], answer: "Shakespeare" },
+            { question: "What is the boiling point of water?", options: ["90°C", "100°C", "110°C", "120°C"], answer: "100°C" }
+        ];
 
-        document.addEventListener('DOMContentLoaded', function() {
-            loadProgress();
-        });
+        const quizContainer = document.getElementById("quiz-container");
+        const submitButton = document.getElementById("submit");
+        const scoreDisplay = document.getElementById("score");
 
-        function loadProgress() {
-            const progress = JSON.parse(sessionStorage.getItem('progress')) || {};
-            for (let i = 0; i < answers.length; i++) {
-                const selectedOption = progress[`q${i}`];
-                if (selectedOption) {
-                    const option = document.querySelector(`input[name="q${i}"][value="${selectedOption}"]`);
-                    if (option) option.checked = true;
-                }
-            }
+        // Load previously saved progress from session storage
+        let savedProgress = JSON.parse(sessionStorage.getItem("progress")) || {};
+
+        function renderQuiz() {
+            quizContainer.innerHTML = "";
+            questions.forEach((q, index) => {
+                let questionDiv = document.createElement("div");
+                questionDiv.classList.add("question");
+                questionDiv.innerHTML = `<p><strong>${index + 1}. ${q.question}</strong></p>`;
+                
+                let optionsDiv = document.createElement("div");
+                optionsDiv.classList.add("options");
+
+                q.options.forEach(option => {
+                    let input = document.createElement("input");
+                    input.type = "radio";
+                    input.name = `question-${index}`;
+                    input.value = option;
+                    input.id = `q${index}-${option}`;
+
+                    if (savedProgress[index] === option) {
+                        input.checked = true; // Retain selection on refresh
+                    }
+
+                    input.addEventListener("change", () => {
+                        savedProgress[index] = option;
+                        sessionStorage.setItem("progress", JSON.stringify(savedProgress));
+                    });
+
+                    let label = document.createElement("label");
+                    label.htmlFor = input.id;
+                    label.textContent = option;
+
+                    optionsDiv.appendChild(input);
+                    optionsDiv.appendChild(label);
+                });
+
+                questionDiv.appendChild(optionsDiv);
+                quizContainer.appendChild(questionDiv);
+            });
         }
 
-        document.querySelectorAll('input[type="radio"]').forEach(input => {
-            input.addEventListener('change', function() {
-                const progress = JSON.parse(sessionStorage.getItem('progress')) || {};
-                progress[this.name] = this.value;
-                sessionStorage.setItem('progress', JSON.stringify(progress));
-            });
-        });
+        renderQuiz();
 
-        function submitQuiz() {
+        submitButton.addEventListener("click", () => {
             let score = 0;
-            for (let i = 0; i < answers.length; i++) {
-                const selectedOption = document.querySelector(`input[name="q${i}"]:checked`);
-                if (selectedOption && selectedOption.value === answers[i]) {
+
+            questions.forEach((q, index) => {
+                if (savedProgress[index] === q.answer) {
                     score++;
                 }
-            }
-            document.getElementById('result').textContent = `Your score is ${score} out of ${answers.length}`;
-            localStorage.setItem('score', score);
-            sessionStorage.removeItem('progress');
+            });
+
+            localStorage.setItem("score", score);
+            sessionStorage.removeItem("progress"); // Clear progress after submission
+
+            scoreDisplay.innerHTML = `<strong>Your score is ${score} out of 5.</strong>`;
+        });
+
+        // Show previous score if available
+        const previousScore = localStorage.getItem("score");
+        if (previousScore !== null) {
+            scoreDisplay.innerHTML = `<strong>Last Attempt Score: ${previousScore} out of 5.</strong>`;
         }
     </script>
+
 </body>
 </html>
